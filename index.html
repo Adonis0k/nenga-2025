@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>おもくじスロット</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 10px;
+        }
+        .happy-new-year {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff5722;
+        }
+        .rules {
+            font-size: 0.9em;
+            margin: 10px auto;
+            width: 80%;
+            text-align: left;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .slot-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px auto;
+            width: 320px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        .slot {
+            width: 100px;
+            height: 300px;
+            display: flex;
+            align-items: flex-start;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #e0e0e0;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .slot img {
+            width: 100%;
+            height: auto;
+            animation: none;
+        }
+        .highlight {
+            background-color: #ffeb3b;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .points {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .start {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .stop {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        @keyframes slide-up {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-700%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="happy-new-year">🎉 Happy New Year 2025 🎉</div>
+    <h1>おみくじスロット</h1>
+    <h2>made by ChatGPT</h2>
+    <div class="rules">
+        <strong>ルール:</strong>
+        <ul>
+            <li>スタートボタンを押すとスロットが回転し、1徳ポイント消費します。</li>
+            <li>ストップボタンを押して各列を停止できます。</li>
+            <li>横または斜めに同じ画像が揃うとポイントが加算されます。</li>
+            <li>初期ポイントは100徳ポイントです。0徳ポイントになると不幸です。</li>
+            <li>徳を貯めてよい１年にしましょう。</li>
+        </ul>
+    </div>
+    <div class="slot-container" id="slot-container">
+        <div class="slot" id="slot-0"></div>
+        <div class="slot" id="slot-1"></div>
+        <div class="slot" id="slot-2"></div>
+    </div>
+    <div class="button-container">
+        <button class="stop" id="stop-0" disabled>ストップ1</button>
+        <button class="stop" id="stop-1" disabled>ストップ2</button>
+        <button class="stop" id="stop-2" disabled>ストップ3</button>
+    </div>
+    <div class="points" id="points">徳ポイント: 100</div>
+    <div class="controls">
+        <button class="start" id="start">スタート</button>
+    </div>
+    <script>
+        // 画像データとポイントテーブル
+        const Reel1Images = ["daikichi1.png", "kichi.png", "chukichi1.png", "shokichi.png", "suekichi.png", "kyo.png", "daikyo.png"];
+        const Reel2Images = ["daikichi2.png", "kichi.png", "chukichi2.png", "shokichi.png", "suekichi.png", "kyo.png", "daikyo.png"];
+        const Reel3Images = ["daikichi3.png", "kichi.png", "chukichi3.png", "shokichi.png", "suekichi.png", "kyo.png", "daikyo.png"];
+        const pointsTable = { "daikichi.png": 100, "kichi.png": 50, "chukichi.png": 30, "shokichi.png": 20, "suekichi.png": 10, "kyo.png": 5, "daikyo.png": 0 };
+        let points = 100;
+        let slots = [[], [], []];  // スロットの内容
+        let isRotating = [false, false, false];  // 各リールが回転中かどうか
+
+        // ポイントを更新する関数
+        const updatePoints = () => {
+            document.getElementById("points").textContent = `${points} 徳ポイント`;
+        };
+
+        // 画像をシャッフルして長さ14にした配列を返す関数
+        const shuffleImages = (reelImages) => {
+            const shuffled = [...reelImages].sort(() => Math.random() - 0.5);  // シャッフル
+            return shuffled.concat(shuffled).slice(0, 14);  // シャッフルした画像を2倍にして14枚に調整
+        };
+
+        // スロットを初期化する関数
+        const initializeSlots = () => {
+            const reelImages = [Reel1Images, Reel2Images, Reel3Images];
+            for (let i = 0; i < 3; i++) {
+                const shuffledImages = shuffleImages(reelImages[i])
+                slots[i] = shuffledImages;  // シャッフルした画像をセット
+
+                const slot = document.querySelector(`#slot-${i}`);
+                slot.innerHTML = '';  // 既存の画像をクリア
+
+                // 画像をスロットに追加
+                for (let j = 0; j < 14; j++) {
+                    const img = document.createElement("img");
+                    img.src = `images/${slots[i][j]}`;
+                    slot.appendChild(img);
+                }
+            }
+        };
+
+        const calculateAnimationDuration = (points) => {
+            const maxDuration = 2;    // 最大アニメーション時間（1ポイントの場合）
+            const midDuration = 1;    // 中間アニメーション時間（100ポイントの場合）
+            const minDuration = 0.6;  // 最小アニメーション時間（1000ポイントの場合）
+
+            // 1から1000の範囲に対して、リニア補間を行う
+            const duration = maxDuration - (points - 1) / (1000 - 1) * (maxDuration - minDuration);
+
+            // 100ポイントの時に1秒になるよう調整
+            return Math.max(minDuration, Math.min(duration, maxDuration));  // 範囲外にはならないように調整
+        };
+
+
+        // スロット回転を開始する関数
+        const startSlotRotation = () => {
+            // ポイントに基づいてアニメーション速度を計算
+            const animationDuration = calculateAnimationDuration(points);
+            // 各リールのアニメーションを開始
+            for (let i = 0; i < 3; i++) {
+                const slot = document.querySelector(`#slot-${i}`);
+                const images = slot.querySelectorAll("img");
+                // アニメーションを設定
+                console.log(`Reel ${i} images:`);
+                images.forEach(img => {
+                    console.log("  images:", getFileName(img.src));
+                    img.style.animation = `slide-up ${animationDuration}s linear infinite`;  // 画像が止まらずに回転
+                });
+            }
+        };
+
+        // スロット回転を停止する関数
+        const stopSlotRotation = (slotIndex) => {
+            const slot = document.querySelector(`#slot-${slotIndex}`);
+            const images = slot.querySelectorAll("img");
+            const imageHeight = images[0].offsetHeight; // 画像の高さを取得
+
+            // アニメーションを停止するタイミングを正確に計算
+            // 現在の画像の位置を取得（translateY）
+            const computedStyle = getComputedStyle(images[0]);
+            const matrix = computedStyle.transform; // 例: "matrix(1, 0, 0, 1, 0, -400)"
+            
+            let currentTranslateY = 0;
+            if (matrix !== "none") {
+                const values = matrix.match(/matrix.*\((.+)\)/)[1].split(', ');
+                currentTranslateY = parseFloat(values[5]); // Y 軸方向の値を取得
+            }
+
+            // 再描画を待つ
+            requestAnimationFrame(() => {
+                // 停止位置を計算
+                const stopPosition = Math.round(Math.abs(currentTranslateY) / imageHeight) % images.length;
+                console.log("stopPosition:", stopPosition);
+                // アニメーションを停止
+                images.forEach((img) => {
+                    img.style.animation = "none";
+                });
+                // スロットの画像を停止位置に合わせる
+                const newSrcs = []; // 一時的に新しい順序を保存する配列
+                for (let i = 0; i < images.length; i++) {
+                    const index = (i + stopPosition) % images.length; // 周期的に画像を配置
+                    newSrcs[i] = images[index].src; // 元の配列の参照値を保存
+                }
+
+                // 元の配列に新しい順序を適用
+                for (let i = 0; i < images.length; i++) {
+                    images[i].src = newSrcs[i];
+                }
+                // 回転停止を記録
+                isRotating[slotIndex] = false;
+                // すべてのリールが停止したか確認し、スタートボタンを有効化
+                if (isRotating.every(flag => !flag)) {
+                    // 遅延を追加して `checkMatching` を呼び出す
+                    setTimeout(() => {
+                        // スタートボタンを有効化
+                        document.getElementById("start").disabled = false;
+
+                        // 揃いを判定
+                        checkMatching();
+                    }, 50); // 50ms の遅延を追加
+                }
+            });
+        };
+
+        // 揃いを判定する関数
+        const checkMatching = () => {
+            // 各リールの画像リストから、上部3つの画像を取得
+            const topImages = [];
+            for (let i = 0; i < 3; i++) {
+
+                const slot = document.querySelector(`#slot-${i}`);
+                const images = slot.querySelectorAll("img");
+                
+                topImages.push([
+                    getFileName(images[0].src), // 上段
+                    getFileName(images[1].src), // 中段
+                    getFileName(images[2].src), // 下段
+                ]);
+            }
+            // 画像名を統一するための処理
+            const normalizeImageName = (fileName) => {
+                if (fileName.includes("daikichi")) {
+                    return "daikichi.png";  // daikichi1, daikichi2, daikichi3 をまとめて扱う
+                } else if (fileName.includes("chukichi")) {
+                    return "chukichi.png";  // chukichi1, chukichi2, chukichi3 をまとめて扱う
+                }
+                return fileName;  // その他はそのまま
+            };
+             // 各リールの画像を統一した名前に変換
+            const normalizedTopImages = topImages.map(row => row.map(normalizeImageName));
+
+            // 揃い判定
+            let score = 0;
+            // 横の揃いをチェック
+            for (let row = 0; row < 3; row++) {
+                if (normalizedTopImages[0][row] === normalizedTopImages[1][row] && normalizedTopImages[1][row] === normalizedTopImages[2][row]) {
+                    score += pointsTable[normalizedTopImages[0][row]];
+                }
+            }
+            // 斜めの揃いをチェック
+            if (normalizedTopImages[0][0] === normalizedTopImages[1][1] && normalizedTopImages[1][1] === normalizedTopImages[2][2]) {
+                score += pointsTable[normalizedTopImages[0][0]];
+            }
+            if (normalizedTopImages[0][2] === normalizedTopImages[1][1] && normalizedTopImages[1][1] === normalizedTopImages[2][0]) {
+                score += pointsTable[normalizedTopImages[0][2]];
+            }
+            // ポイントを加算
+            if (score > 0) {
+                points += score;
+                updatePoints();
+
+                // 1000ポイントに達した場合の特別メッセージと背景変更
+                if (points >= 1000) {
+                    alert(`おめでとう！ ${score} 徳ポイントを獲得しました！`);
+                    alert(`1000 徳ポイント達成しました！1年間一日3回までの免罪符だね！`);
+                    
+                    // ページの背景を正月っぽくする
+                    document.body.style.backgroundImage = "url('images/bg.png')";  // 背景画像を正月テーマに変更
+                    document.body.style.backgroundSize = "cover";  // 背景画像を画面に合わせる
+                    document.body.style.backgroundPosition = "center";  // 背景画像の位置を中央に設定
+                    document.body.style.color = "white";  // 文字色を白に変更
+                    document.body.style.fontFamily = "cursive, sans-serif";  // 正月っぽいフォントに変更
+
+                    // 新年を祝うメッセージを表示する
+                    const newYearMessage = document.createElement('div');
+                    newYearMessage.textContent = "🎉 新年おめでとうございます！ 🎉";
+                    newYearMessage.style.position = "absolute";
+                    newYearMessage.style.top = "30%";
+                    newYearMessage.style.left = "50%";
+                    newYearMessage.style.transform = "translate(-50%, -50%)";
+                    newYearMessage.style.fontSize = "3em";
+                    newYearMessage.style.color = "gold";
+                    newYearMessage.style.textShadow = "2px 2px 5px rgba(0, 0, 0, 0.7)";
+                    newYearMessage.style.textAlign = "center";
+                    document.body.appendChild(newYearMessage);
+                } else {
+                    alert(`おめでとう！${score} 徳ポイントを獲得しました！`);
+                }
+            }
+        };
+
+        // 画像の `src` からファイル名を抽出する関数
+        const getFileName = (src) => {
+            return src.split('/').pop().split('?')[0]; // URLの末尾からファイル名を抽出（クエリストリング対応）
+        };
+
+        // スタートボタンがクリックされたときの処理
+        document.getElementById("start").addEventListener("click", () => {
+            // ポイントが足りない場合はアラート
+            if (points < 1) {
+                alert("ポイントが足りません！");
+                return;
+            }
+            points -= 1;
+            updatePoints();  // ポイントを更新
+            // スロット回転を開始
+            initializeSlots();
+            startSlotRotation();
+            // 各リールが回転中であることを設定
+            isRotating = [true, true, true];
+            // ストップボタンを有効化
+            document.querySelectorAll(".stop").forEach((button) => {
+                button.disabled = false;
+            });
+            // スタートボタン無効化
+            document.getElementById("start").disabled = true;
+        });
+
+        // ストップボタンがクリックされたときの処理
+        document.querySelectorAll(".stop").forEach((button, index) => {
+            button.addEventListener("click", () => {
+                // リールが回転中なら停止
+                if (isRotating[index]) {
+                    stopSlotRotation(index);
+                }
+                // ストップボタン無効化
+                button.disabled = true;
+            });
+        });
+
+        // ページが読み込まれた際にスロットを初期化
+        window.onload = () => {
+            initializeSlots();
+        };
+    </script>
+    
+</body>
+</html>
