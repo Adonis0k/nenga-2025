@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>おもくじスロット</title>
+    <title>おみくじスロット</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -111,7 +111,7 @@
     <div class="rules">
         <strong>ルール:</strong>
         <ul>
-            <li>スタートボタンを押すとスロットが回転し、1徳ポイント消費します。</li>
+            <li>スタートボタンを押すとスロットが回転し、10徳ポイント消費します。</li>
             <li>ストップボタンを押して各列を停止できます。</li>
             <li>横または斜めに同じ画像が揃うとポイントが加算されます。</li>
             <li>初期ポイントは100徳ポイントです。0徳ポイントになると不幸です。</li>
@@ -340,11 +340,11 @@
         // スタートボタンがクリックされたときの処理
         document.getElementById("start").addEventListener("click", () => {
             // ポイントが足りない場合はアラート
-            if (points < 1) {
+            if (points < 10) {
                 alert("ポイントが足りません！");
                 return;
             }
-            points -= 1;
+            points -= 10;
             updatePoints();  // ポイントを更新
             // スロット回転を開始
             initializeSlots();
