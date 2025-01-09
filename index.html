@@ -103,6 +103,48 @@
             0% { transform: translateY(0); }
             100% { transform: translateY(-1300%); }
         }
+        .points-table {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: 360px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .points-table h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .points-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .points-table table th, .points-table table td {
+            padding: 8px 16px;
+            text-align: center;
+        }
+
+        .points-table table th {
+            background-color: #f0f0f0;
+        }
+
+        .points-table table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .points-table img {
+            width: 50px;
+            height: 50px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
     </style>
 </head>
 <body>
@@ -133,11 +175,42 @@
         <button class="start" id="start">スタート</button>
     </div>
     <div class="points" id="points">100 徳ポイント</div>
+    <div class="points-table">
+        <h3>ポイント表</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>シンボル</th>
+                    <th>ポイント</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ポイントテーブルはここに追加されます -->
+            </tbody>
+        </table>
+    </div>
+    
     <script>
         // 画像データとポイントテーブル
-        const reel1Images = ["daikichi1.png", "kichi.png", "kichi.png", "chukichi1.png", "chukichi1.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo1.png", "kyo1.png", "daikyo.png"];
-        const reel2Images = ["daikichi2.png", "kichi.png", "kichi.png", "chukichi2.png", "chukichi2.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo2.png", "kyo2.png", "daikyo.png"];
-        const reel3Images = ["daikichi3.png", "kichi.png", "kichi.png", "chukichi3.png", "chukichi3.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo3.png", "kyo3.png", "daikyo.png"];
+        // 画像のファイル名をリスト化
+        const imageFiles = {
+            "daikichi1": "daikichi1.png",
+            "daikichi2": "daikichi2.png",
+            "daikichi3": "daikichi3.png",
+            "kichi": "kichi.png",
+            "chukichi1": "chukichi1.png",
+            "chukichi2": "chukichi2.png",
+            "chukichi3": "chukichi3.png",
+            "shokichi": "shokichi.png",
+            "suekichi": "suekichi.png",
+            "kyo1": "kyo1.png",
+            "kyo2": "kyo2.png",
+            "kyo3": "kyo3.png",
+            "daikyo": "daikyo.png"
+        };
+        const reel1Symbols = ["daikichi1", "kichi", "kichi", "chukichi1", "chukichi1", "shokichi", "shokichi", "suekichi", "suekichi", "suekichi", "kyo1", "kyo1", "daikyo"];
+        const reel2Symbols = ["daikichi2", "kichi", "kichi", "chukichi2", "chukichi2", "shokichi", "shokichi", "suekichi", "suekichi", "suekichi", "kyo2", "kyo2", "daikyo"];
+        const reel3Symbols = ["daikichi3", "kichi", "kichi", "chukichi3", "chukichi3", "shokichi", "shokichi", "suekichi", "suekichi", "suekichi", "kyo3", "kyo3", "daikyo"];
         const pointsTable = { 
             "daikichi1-daikichi2-daikichi3": 100, 
             "kichi-kichi-kichi": 50, 
@@ -166,22 +239,50 @@
 
         // スロットを初期化する関数
         const initializeSlots = () => {
-            const reelImages = [reel1Images, reel2Images, reel3Images];
+            const reelSymbols = [reel1Symbols, reel2Symbols, reel3Symbols];
             for (let i = 0; i < 3; i++) {
-                const shuffledImages = shuffleImages(reelImages[i])
-                slots[i] = shuffledImages;  // シャッフルした画像をセット
+                const shuffledSymbols = shuffleImages(reelSymbols[i])
+                slots[i] = shuffledSymbols;  // シャッフルした画像をセット
 
                 const slot = document.querySelector(`#slot-${i}`);
                 slot.innerHTML = '';  // 既存の画像をクリア
 
                 // 画像をスロットに追加
-                for (let j = 0; j < shuffledImages.length; j++) {
+                for (let j = 0; j < shuffledSymbols.length; j++) {
                     const img = document.createElement("img");
-                    img.src = `images/${slots[i][j]}`;
+                    img.src = `images/${imageFiles[slots[i][j]]}`;
                     slot.appendChild(img);
                 }
             }
         };
+
+        // ポイントテーブルをHTMLに追加する関数
+        const renderPointsTable = () => {
+            const pointsTableElement = document.querySelector('.points-table tbody');
+            pointsTableElement.innerHTML = ''; // 既存の内容をクリア
+
+            // ポイントテーブルの内容を順番に追加
+            Object.keys(pointsTable).forEach((key) => {
+                const line = key.split('-');
+                const points = pointsTable[key];
+                const row = document.createElement('tr');
+                
+                const symbolCell = document.createElement('td');
+                line.forEach(symbol => {
+                    const img = document.createElement('img');
+                    img.src = `images/${imageFiles[symbol]}`;
+                    symbolCell.appendChild(img);
+                });
+
+                const pointsCell = document.createElement('td');
+                pointsCell.textContent = points;
+
+                row.appendChild(symbolCell);
+                row.appendChild(pointsCell);
+                pointsTableElement.appendChild(row);
+            });
+        }
+
 
         const calculateAnimationDuration = (points) => {
             const maxDuration = 2;    // 最大アニメーション時間（1ポイントの場合）
@@ -265,7 +366,6 @@
                 }
             });
         };
-
 
         // シンボルごとのイベントハンドラ
         const symbolEvents = {
@@ -408,6 +508,7 @@
         // ページが読み込まれた際にスロットを初期化
         window.onload = () => {
             initializeSlots();
+            renderPointsTable();
         };
     </script>
     
