@@ -135,9 +135,9 @@
     <div class="points" id="points">100 徳ポイント</div>
     <script>
         // 画像データとポイントテーブル
-        const reel1Images = ["daikichi1.png", "kichi.png", "kichi.png", "chukichi1.png", "chukichi1.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo.png", "kyo.png", "daikyo.png"];
-        const reel2Images = ["daikichi2.png", "kichi.png", "kichi.png", "chukichi1.png", "chukichi2.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo.png", "kyo.png", "daikyo.png"];
-        const reel3Images = ["daikichi3.png", "kichi.png", "kichi.png", "chukichi1.png", "chukichi3.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo.png", "kyo.png", "daikyo.png"];
+        const reel1Images = ["daikichi1.png", "kichi.png", "kichi.png", "chukichi1.png", "chukichi1.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo1.png", "kyo1.png", "daikyo.png"];
+        const reel2Images = ["daikichi2.png", "kichi.png", "kichi.png", "chukichi2.png", "chukichi2.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo2.png", "kyo2.png", "daikyo.png"];
+        const reel3Images = ["daikichi3.png", "kichi.png", "kichi.png", "chukichi3.png", "chukichi3.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo3.png", "kyo3.png", "daikyo.png"];
         const pointsTable = { "daikichi.png": 100, "kichi.png": 50, "chukichi.png": 30, "shokichi.png": 20, "suekichi.png": 10, "kyo.png": 5, "daikyo.png": 0 };
         let points = 100;
         let multiplier = 1; // 現在の倍率
@@ -178,7 +178,7 @@
         const calculateAnimationDuration = (points) => {
             const maxDuration = 2;    // 最大アニメーション時間（1ポイントの場合）
             const midDuration = 1;    // 中間アニメーション時間（100ポイントの場合）
-            const minDuration = 0.2;  // 最小アニメーション時間（1000ポイントの場合）
+            const minDuration = 0.3;  // 最小アニメーション時間（1000ポイントの場合）
 
             // 1から1000の範囲に対して、リニア補間を行う
             const duration = maxDuration - (points - 1) / (1000 - 1) * (maxDuration - minDuration);
@@ -297,58 +297,40 @@
 
             // 揃い判定
             let score = 0;
-            
+            let matchedLines = 0;
             // 揃いをチェックする関数
             const checkLine = (line) => {
                 if (line[0] === line[1] && line[1] === line[2]) {
                     const matchedSymbol = line[0];
                     score += pointsTable[matchedSymbol] || 0; // ポイントを加算
+                    matchedLines++; // 揃ったラインをカウント
                     if (symbolEvents[matchedSymbol]) {
                         symbolEvents[matchedSymbol](); // シンボルイベントを実行
                     }
                 }
             };
-
             /// 横ラインをチェック
             for (let row = 0; row < 3; row++) {
                 checkLine([normalizedTopImages[0][row], normalizedTopImages[1][row], normalizedTopImages[2][row]]);
             }
-
             // 斜めラインをチェック
             checkLine([normalizedTopImages[0][0], normalizedTopImages[1][1], normalizedTopImages[2][2]]);
             checkLine([normalizedTopImages[0][2], normalizedTopImages[1][1], normalizedTopImages[2][0]]);
 
             // ポイントを加算
             if (score > 0) {
-                score *= multiplier;
+                score *= multiplier; // 倍率を適用
+                if (matchedLines > 1) {
+                    score *= matchedLines * 3; // ラインの数 × 3倍を適用
+                }
                 points += score;
                 updatePoints();
 
                 // 1000ポイントに達した場合の特別メッセージと背景変更
                 if (points >= 1000) {
+                    handleThousandPoints();
                     alert(`おめでとう！ ${score} 徳ポイントを獲得しました！`);
                     alert(`1000 徳ポイント達成しました！1年間一日3回までの免罪符だね！`);
-                    
-                    // ページの背景を正月っぽくする
-                    document.body.style.backgroundImage = "url('images/bg.png')";  // 背景画像を正月テーマに変更
-                    document.body.style.backgroundSize = "cover";  // 背景画像を画面に合わせる
-                    document.body.style.backgroundPosition = "center";  // 背景画像の位置を中央に設定
-
-                    // 新年を祝うメッセージを表示する
-                    const newYearMessage = document.createElement('div');
-                    newYearMessage.textContent = "🎉 新年おめでとうございます！ 🎉";
-                    newYearMessage.style.position = "absolute";
-                    newYearMessage.style.top = "260px";
-                    newYearMessage.style.left = "50%";
-                    newYearMessage.style.transform = "translate(-50%, -50%)";
-                    newYearMessage.style.fontSize = "3em";
-                    newYearMessage.style.color = "gold";
-                    newYearMessage.style.textShadow = "2px 2px 5px rgba(0, 0, 0, 0.7)";
-                    newYearMessage.style.textAlign = "center";
-                    newYearMessage.style.color = "white";  // 文字色を白に変更
-                    newYearMessage.style.backgroundColor = "red";  // 文字色を白に変更
-                    newYearMessage.style.fontFamily = "cursive, sans-serif";  // 正月っぽいフォントに変更
-                    document.body.appendChild(newYearMessage);
                 } else {
                     alert(`おめでとう！${score} 徳ポイントを獲得しました！`);
                 }
@@ -358,6 +340,30 @@
         // 画像の `src` からファイル名を抽出する関数
         const getFileName = (src) => {
             return src.split('/').pop().split('?')[0]; // URLの末尾からファイル名を抽出（クエリストリング対応）
+        };
+
+        // 1000ポイント達成時の特別処理を関数化
+        const handleThousandPoints = () => {
+            // ページの背景を正月っぽくする
+            document.body.style.backgroundImage = "url('images/bg.png')";  // 背景画像を正月テーマに変更
+            document.body.style.backgroundSize = "cover";  // 背景画像を画面に合わせる
+            document.body.style.backgroundPosition = "center";  // 背景画像の位置を中央に設定
+
+            // 新年を祝うメッセージを表示する
+            const newYearMessage = document.createElement('div');
+            newYearMessage.textContent = "🎉 新年おめでとうございます！ 🎉";
+            newYearMessage.style.position = "absolute";
+            newYearMessage.style.top = "260px";
+            newYearMessage.style.left = "50%";
+            newYearMessage.style.transform = "translate(-50%, -50%)";
+            newYearMessage.style.fontSize = "3em";
+            newYearMessage.style.color = "gold";
+            newYearMessage.style.textShadow = "2px 2px 5px rgba(0, 0, 0, 0.7)";
+            newYearMessage.style.textAlign = "center";
+            newYearMessage.style.color = "white";  // 文字色を白に変更
+            newYearMessage.style.backgroundColor = "red";  // 文字色を白に変更
+            newYearMessage.style.fontFamily = "cursive, sans-serif";  // 正月っぽいフォントに変更
+            document.body.appendChild(newYearMessage);
         };
 
         // スタートボタンがクリックされたときの処理
