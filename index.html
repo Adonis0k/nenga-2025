@@ -289,6 +289,8 @@
                     return "daikichi.png";  // daikichi1, daikichi2, daikichi3 をまとめて扱う
                 } else if (fileName.includes("chukichi")) {
                     return "chukichi.png";  // chukichi1, chukichi2, chukichi3 をまとめて扱う
+                } else if (fileName.match(/^kyo[1-3]\.png$/)) {
+                    return "kyo.png";  // kyo1.png, kyo2.png, kyo3.png をまとめて扱う
                 }
                 return fileName;  // その他はそのまま
             };
