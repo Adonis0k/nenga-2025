@@ -114,9 +114,9 @@
         <ul>
             <li>スタートボタンを押すとスロットが回転し、10徳ポイント消費します。</li>
             <li>ストップボタンを押して各列を停止できます。</li>
-            <li>横または斜めに同じ画像が揃うとポイントが加算されます。</li>
-            <li>初期ポイントは100徳ポイントです。0徳ポイントになると不幸です。</li>
-            <li>徳を貯めてよい１年にしましょう。</li>
+            <li>横または斜めに同じシンボルが揃うとポイントが加算されます。特別な効果のシンボルもあります。</li>
+            <li>複数のラインが同時に揃うと大幅に獲得ポイントがアップします。</li>
+            <li>0徳ポイントになると不幸です。徳を貯めてよい１年にしましょう。</li>
         </ul>
     </div>
     <div class="slot-container" id="slot-container">
@@ -138,7 +138,15 @@
         const reel1Images = ["daikichi1.png", "kichi.png", "kichi.png", "chukichi1.png", "chukichi1.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo1.png", "kyo1.png", "daikyo.png"];
         const reel2Images = ["daikichi2.png", "kichi.png", "kichi.png", "chukichi2.png", "chukichi2.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo2.png", "kyo2.png", "daikyo.png"];
         const reel3Images = ["daikichi3.png", "kichi.png", "kichi.png", "chukichi3.png", "chukichi3.png", "shokichi.png", "shokichi.png", "suekichi.png", "suekichi.png", "suekichi.png", "kyo3.png", "kyo3.png", "daikyo.png"];
-        const pointsTable = { "daikichi.png": 100, "kichi.png": 50, "chukichi.png": 30, "shokichi.png": 20, "suekichi.png": 10, "kyo.png": 5, "daikyo.png": 0 };
+        const pointsTable = { 
+            "daikichi1-daikichi2-daikichi3": 100, 
+            "kichi-kichi-kichi": 50, 
+            "chukichi1-chukichi2-chukichi3": 30, 
+            "shokichi-shokichi-shokichi": 20, 
+            "suekichi-suekichi-suekichi": 10, 
+            "kyo1-kyo2-kyo3": 5, 
+            "daikyo-daikyo-daikyo": 0,
+        };
         let points = 100;
         let multiplier = 1; // 現在の倍率
         let nextSpinMultiplier = 1; // 次回スピン時の倍率
@@ -261,10 +269,10 @@
 
         // シンボルごとのイベントハンドラ
         const symbolEvents = {
-            "daikyo.png": () => {
+            "daikyo-daikyo-daikyo": () => {
                 nextSpinMultiplier = 3; // 次回のスピン限定で倍率を2倍に設定
                 alert("次のスピンで獲得ポイントが3倍になります！");
-            },
+            }
             // 他のシンボルもここに追加可能
         };
 
@@ -273,51 +281,39 @@
             // 各リールの画像リストから、上部3つの画像を取得
             const topImages = [];
             for (let i = 0; i < 3; i++) {
-
                 const slot = document.querySelector(`#slot-${i}`);
                 const images = slot.querySelectorAll("img");
-                
                 topImages.push([
                     getFileName(images[0].src), // 上段
                     getFileName(images[1].src), // 中段
                     getFileName(images[2].src), // 下段
                 ]);
             }
-            // 画像名を統一するための処理
-            const normalizeImageName = (fileName) => {
-                if (fileName.includes("daikichi")) {
-                    return "daikichi.png";  // daikichi1, daikichi2, daikichi3 をまとめて扱う
-                } else if (fileName.includes("chukichi")) {
-                    return "chukichi.png";  // chukichi1, chukichi2, chukichi3 をまとめて扱う
-                } else if (fileName.match(/^kyo[1-3]\.png$/)) {
-                    return "kyo.png";  // kyo1.png, kyo2.png, kyo3.png をまとめて扱う
-                }
-                return fileName;  // その他はそのまま
-            };
-             // 各リールの画像を統一した名前に変換
-            const normalizedTopImages = topImages.map(row => row.map(normalizeImageName));
 
             // 揃い判定
             let score = 0;
             let matchedLines = 0;
             // 揃いをチェックする関数
             const checkLine = (line) => {
-                if (line[0] === line[1] && line[1] === line[2]) {
-                    const matchedSymbol = line[0];
-                    score += pointsTable[matchedSymbol] || 0; // ポイントを加算
-                    matchedLines++; // 揃ったラインをカウント
-                    if (symbolEvents[matchedSymbol]) {
-                        symbolEvents[matchedSymbol](); // シンボルイベントを実行
+                const lineKey = line.join("-");
+                // ポイントテーブルに一致する組み合わせがあればポイント加算
+                if (lineKey in pointsTable) {
+                    console.log("lineKey:", lineKey);
+                    score += pointsTable[lineKey];
+                    matchedLines++;
+                    if (symbolEvents[lineKey]) {
+                        symbolEvents[lineKey](); // シンボルイベントを実行
                     }
                 }
+
             };
             /// 横ラインをチェック
             for (let row = 0; row < 3; row++) {
-                checkLine([normalizedTopImages[0][row], normalizedTopImages[1][row], normalizedTopImages[2][row]]);
+                checkLine([topImages[0][row], topImages[1][row], topImages[2][row]]);
             }
             // 斜めラインをチェック
-            checkLine([normalizedTopImages[0][0], normalizedTopImages[1][1], normalizedTopImages[2][2]]);
-            checkLine([normalizedTopImages[0][2], normalizedTopImages[1][1], normalizedTopImages[2][0]]);
+            checkLine([topImages[0][0], topImages[1][1], topImages[2][2]]);
+            checkLine([topImages[0][2], topImages[1][1], topImages[2][0]]);
 
             // ポイントを加算
             if (score > 0) {
@@ -341,8 +337,10 @@
 
         // 画像の `src` からファイル名を抽出する関数
         const getFileName = (src) => {
-            return src.split('/').pop().split('?')[0]; // URLの末尾からファイル名を抽出（クエリストリング対応）
+            const fileName = src.split('/').pop().split('?')[0]; // ファイル名の取得
+            return fileName.replace('.png', ''); // .pngを削除
         };
+
 
         // 1000ポイント達成時の特別処理を関数化
         const handleThousandPoints = () => {
