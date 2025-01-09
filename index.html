@@ -52,13 +52,13 @@
             background-color: #e0e0e0;
             overflow: hidden;
             position: relative;
-            display: flex;
             flex-direction: column;
         }
         .slot img {
             width: 100%;
             height: auto;
             animation: none;
+            transform: translateY(-85%);
         }
         .highlight {
             background-color: #ffeb3b;
@@ -98,10 +98,14 @@
             justify-content: center;
             gap: 20px;
             margin-top: 10px;
-        }        
+        }
         @keyframes slide-up {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-1300%); }
+            0% { transform: translateY(-85%); }
+            100% { transform: translateY(-1385%); }
+        }
+        @keyframes slide-down {
+            0% { transform: translateY(-1385%); }
+            100% { transform: translateY(-85%); }
         }
         .points-table {
             margin-top: 20px;
@@ -285,13 +289,10 @@
 
 
         const calculateAnimationDuration = (points) => {
-            const maxDuration = 2;    // 最大アニメーション時間（1ポイントの場合）
-            const midDuration = 1;    // 中間アニメーション時間（100ポイントの場合）
+            const maxDuration = 10;    // 最大アニメーション時間（1ポイントの場合）
             const minDuration = 0.3;  // 最小アニメーション時間（1000ポイントの場合）
-
             // 1から1000の範囲に対して、リニア補間を行う
             const duration = maxDuration - (points - 1) / (1000 - 1) * (maxDuration - minDuration);
-
             // 100ポイントの時に1秒になるよう調整
             return Math.max(minDuration, Math.min(duration, maxDuration));  // 範囲外にはならないように調整
         };
@@ -309,8 +310,18 @@
                 console.log(`Reel ${i} images:`);
                 images.forEach(img => {
                     console.log("  images:", getFileName(img.src));
-                    img.style.animation = `slide-up ${animationDuration}s linear infinite`;  // 画像が止まらずに回転
                 });
+
+                // 2番目のリール（真ん中）の場合、逆回転を適用
+                if (i === 1) {
+                    images.forEach(img => {
+                        img.style.animation = `slide-down ${animationDuration}s linear infinite`;  // 逆回転
+                    });
+                } else {
+                    images.forEach(img => {
+                        img.style.animation = `slide-up ${animationDuration}s linear infinite`;  // 通常回転
+                    });
+                }
             }
         };
 
@@ -320,21 +331,21 @@
             const images = slot.querySelectorAll("img");
             const imageHeight = images[0].offsetHeight; // 画像の高さを取得
 
-            // アニメーションを停止するタイミングを正確に計算
-            // 現在の画像の位置を取得（translateY）
-            const computedStyle = getComputedStyle(images[0]);
-            const matrix = computedStyle.transform; // 例: "matrix(1, 0, 0, 1, 0, -400)"
-            
-            let currentTranslateY = 0;
-            if (matrix !== "none") {
-                const values = matrix.match(/matrix.*\((.+)\)/)[1].split(', ');
-                currentTranslateY = parseFloat(values[5]); // Y 軸方向の値を取得
-            }
 
             // 再描画を待つ
             requestAnimationFrame(() => {
+                // アニメーションを停止するタイミングを正確に計算
+                // 現在の画像の位置を取得（translateY）
+                const computedStyle = getComputedStyle(images[0]);
+                const matrix = computedStyle.transform; // 例: "matrix(1, 0, 0, 1, 0, -400)"
+                
+                let currentTranslateY = 0;
+                if (matrix !== "none") {
+                    const values = matrix.match(/matrix.*\((.+)\)/)[1].split(', ');
+                    currentTranslateY = parseFloat(values[5]); // Y 軸方向の値を取得
+                }
                 // 停止位置を計算
-                const stopPosition = Math.round(Math.abs(currentTranslateY) / imageHeight) % images.length;
+                const stopPosition = Math.round(Math.abs(currentTranslateY + (imageHeight*0.85)) / imageHeight) % images.length;
                 console.log("stopPosition:", stopPosition);
                 // アニメーションを停止
                 images.forEach((img) => {
@@ -384,9 +395,9 @@
                 const slot = document.querySelector(`#slot-${i}`);
                 const images = slot.querySelectorAll("img");
                 topImages.push([
-                    getFileName(images[0].src), // 上段
-                    getFileName(images[1].src), // 中段
-                    getFileName(images[2].src), // 下段
+                    getFileName(images[1].src), // 上段
+                    getFileName(images[2].src), // 中段
+                    getFileName(images[3].src), // 下段
                 ]);
             }
 
@@ -396,9 +407,9 @@
             // 揃いをチェックする関数
             const checkLine = (line) => {
                 const lineKey = line.join("-");
+                console.log("lineKey:", lineKey);
                 // ポイントテーブルに一致する組み合わせがあればポイント加算
                 if (lineKey in pointsTable) {
-                    console.log("lineKey:", lineKey);
                     score += pointsTable[lineKey];
                     matchedLines++;
                     if (symbolEvents[lineKey]) {
