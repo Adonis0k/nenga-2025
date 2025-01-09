@@ -289,7 +289,7 @@
 
 
         const calculateAnimationDuration = (points) => {
-            const maxDuration = 10;    // 最大アニメーション時間（1ポイントの場合）
+            const maxDuration = 4;    // 最大アニメーション時間（1ポイントの場合）
             const minDuration = 0.3;  // 最小アニメーション時間（1000ポイントの場合）
             // 1から1000の範囲に対して、リニア補間を行う
             const duration = maxDuration - (points - 1) / (1000 - 1) * (maxDuration - minDuration);
@@ -430,7 +430,7 @@
             if (score > 0) {
                 score *= multiplier; // 倍率を適用
                 if (matchedLines > 1) {
-                    score *= matchedLines * 3; // ラインの数 × 3倍を適用
+                    score *= (matchedLines-1) * 3; // ラインの数 × 3倍を適用
                 }
                 points += score;
                 updatePoints();
